@@ -5,6 +5,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.naive_bayes import BernoulliNB
+import matplotlib.pyplot as plt
 
 
 # function to put file paths into a list
@@ -49,9 +50,9 @@ def remove_headers_footers(data):
     return new_data
 
 
-#easy_ham = remove_headers_footers(easy_ham)
-#hard_ham = remove_headers_footers(hard_ham)
-#spam = remove_headers_footers(spam)
+easy_ham = remove_headers_footers(easy_ham)
+hard_ham = remove_headers_footers(hard_ham)
+spam = remove_headers_footers(spam)
 
 ham = easy_ham + hard_ham
 
@@ -80,7 +81,7 @@ def vectorize_data(X_train, X_test):
 # first vectorizing the data
 def train_and_evaluate(X_train, X_test, y_train, y_test):
     X_train, X_test = vectorize_data(X_train, X_test)
-    classifier = MultinomialNB()
+    classifier = MultinomialNB(fit_prior=False)
     classifier.fit(X_train, y_train)
     y_pred = classifier.predict(X_test)
     print('Accuracy with Multinomial: ', accuracy_score(y_test, y_pred))
@@ -96,11 +97,12 @@ def vectorise_data_bernoulli(X_train, X_test):
 
 def train_and_evaluate_bernoulli(X_train, X_test, y_train, y_test):
     X_train, X_test = vectorise_data_bernoulli(X_train, X_test)
-    classifier = BernoulliNB()
+    classifier = BernoulliNB(fit_prior=False)
     classifier.fit(X_train, y_train)
     y_pred = classifier.predict(X_test)
     print('Accuracy with Bernoulli: ', accuracy_score(y_test, y_pred))
     return y_pred
+
 
 print('Testing on the whole ham dataset:')
 print('-------------------')
@@ -121,16 +123,30 @@ def true_false_rates(y_test, y_pred):
     print('True Positive Rate: ', TPR)
     FPR = FP / (FP + TN)
     print('False Positive Rate: ', FPR)
-    return
+
+    return TP, TN, FP, FN, TPR, FPR
 
 
 
 print('Multinomial classifier')
-true_false_rates(spamtest, y_predSpamMB)
+MBTP, MBTN, MBFP, MBFN, MBTPR, MBFPR = true_false_rates(spamtest, y_predSpamMB)
 print('-------------------')
 print('Bernoulli classifier')
-true_false_rates(spamtest, y_predSpamB)
+BTP, BTN, BFP, BFN, BTPR, BFPR = true_false_rates(spamtest, y_predSpamB)
 print('-------------------')
+# plot bar chart splitting bars by classifier
+N = 4
+ind = np.arange(N)
+width = 0.35
+fig, ax = plt.subplots()
+rects1 = ax.bar(ind, [MBTP, MBTN, MBFP, MBFN], width, color='b', edgecolor='black')
+rects2 = ax.bar(ind + width, [BTP, BTN, BFP, BFN], width, color='orange', edgecolor='black')
+ax.set_ylabel('Amount')
+ax.set_title('True/False Positives and Negatives')
+ax.set_xticks(ind + width / 2)
+ax.set_xticklabels(('True Positives', 'True Negatives', 'False Positives', 'False Negatives'))
+ax.legend((rects1[0], rects2[0]), ('Multinomial', 'Bernoulli'))
+plt.show()
 
 # spam vs easy ham
 # X is features and y is labels
